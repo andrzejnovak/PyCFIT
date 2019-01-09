@@ -9,12 +9,19 @@ To build a python wrapper:
 
 # Build swig:
 git clone https://github.com/swig/swig.git
+mkdir swig_build
 cd swig
-./autogen.sh && ./configure --prefix=<your build folder> && make && make install
+./autogen.sh && ./configure --prefix=<your abolute path>/swig_build && make && make install
 
 # Add swig to path
-export PATH=/path/to/swig_build_dir/bin:$PATH
+export PATH=<your abolute path>/swig_build/bin:$PATH
 
+# Checkout PyCFIT
+git clone https://github.com/andrzejnovak/PyCFIT.git
+
+# Compile CFIT
+cd PyCFIT
+make
 # Build wrapper
 ./buildPyLib.sh
 
