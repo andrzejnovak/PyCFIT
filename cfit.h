@@ -103,6 +103,8 @@ namespace CFIT
 	// option="": perform the fit with pre-tag templates
 	// option="tag": perform the fit with tag templates 
 	void Run(std::string option = "");
+
+	std::string GetRun() {return runName;};
 	
 	// switch on verbose
 	// 0: no verbose
@@ -139,6 +141,9 @@ namespace CFIT
 	
 	// produce plots and store results in file
 	void ProducePlots(bool produce = 1);
+	// set Batchmode
+
+	void SetBatch(bool batch = 1);
 	
 	// return chi2 of the fit
 	double GetChisq();
@@ -189,6 +194,8 @@ namespace CFIT
 
 	// set the output name for root file with matrix
 	void SetMatrixName(std::string name = "matrix");
+
+	void SetPicsDir(std::string name = "pics");
 
 	// set histogram legend header
 	void SetLegendHeader(std::string name = "");
@@ -305,9 +312,11 @@ namespace CFIT
 	TFile *fcov;
 	std::string covOption;
 	std::string covName;
+	std::string dirName;
 	std::string legendName;
 	std::string runName;
 	bool producePlots;
+	bool setBatch;
 	float _NDATA;
 	float _NMC[NTEMPLATEMAX];
 	float _NMCERR[NTEMPLATEMAX];

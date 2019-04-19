@@ -76,6 +76,7 @@ CFIT::cfit::cfit(std::string name)
    legendName = "";
    
    producePlots = 0;
+   setBatch = 0;
 
    *verb = 0;
    
@@ -103,6 +104,10 @@ void CFIT::cfit::SetInputFile(std::string fin)
 void CFIT::cfit::ProducePlots(bool produce)
 {
    producePlots = produce;
+}
+void CFIT::cfit::SetBatch(bool batch)
+{
+   setBatch = batch;
 }
 
 void CFIT::cfit::SetOptimization(OPTMODE mode)
@@ -447,6 +452,12 @@ void CFIT::cfit::SetMatrixName(std::string name)
    covName = name;
 }
 
+void CFIT::cfit::SetPicsDir(std::string name)
+{
+   dirName = name;
+}
+
+
 void CFIT::cfit::SetLegendHeader(std::string name)
 {
    legendName = name;
@@ -548,8 +559,11 @@ void CFIT::cfit::processInput(std::string option)
    reset();
    if( *verb ) std::cout << "Reset done" << std::endl;
 
-   if( option != "tag" && producePlots )
-     system("if [[ ! -d pics ]]; then mkdir pics; else rm -r pics; mkdir pics; fi");
+   if( option != "tag" && producePlots ){
+     //system("if [ ! -d pics ]; then mkdir pics; else rm -r pics; mkdir pics; fi");
+    std::string mdir = std::string("if [ ! -d ") + dirName +" ]; then mkdir "+dirName+"; else rm -r "+dirName+"; mkdir "+dirName+"; fi";
+    system(mdir.c_str());
+	}
    
    gErrorIgnoreLevel = 2000;
 
@@ -635,7 +649,7 @@ void CFIT::cfit::processInput(std::string option)
 
 	if( h_data->Integral() == 0. )
 	  {
-	     std::cout << "Data histogram is empty" << std::endl;
+	     std::cout << "Data histogram is empty: " << hdcopyNOM << std::endl;
 	     reset();
 	     exit(1);
 	  }
@@ -669,7 +683,7 @@ void CFIT::cfit::processInput(std::string option)
 	
 	if( h_data_tag->Integral() == 0. )
 	  {
-	     std::cout << "Data tag histogram is empty" << std::endl;
+	     std::cout << "Data tag histogram is empty: " << hdcopyTAG << std::endl;
 	     reset();
 	     exit(1);
 	  }	
@@ -689,7 +703,7 @@ void CFIT::cfit::processInput(std::string option)
 	
 	if( h_data_untag->Integral() == 0. )
 	  {
-	     std::cout << "Data untag histogram is empty" << std::endl;
+	     std::cout << "Data untag histogram is empty: " << hdcopyUNTAG << std::endl;
 	     reset();
 	     exit(1);
 	  }	
@@ -789,7 +803,7 @@ void CFIT::cfit::processInput(std::string option)
 	  }	
 	if( htNOM->Integral() == 0. )
 	  {
-	     std::cout << "Template histogram is empty" << std::endl;
+	     std::cout << "Template histogram is empty:" << hnameNOM << std::endl;
 	     reset();
 	     exit(1);
 	  }	
@@ -825,7 +839,7 @@ void CFIT::cfit::processInput(std::string option)
 	       }	
 	     if( htTAGNOM->Integral() == 0. )
 	       {
-		  std::cout << "Template tag histogram is empty" << std::endl;
+		  std::cout << "Template tag histogram is empty: " << hnameTAGNOM << std::endl;
 		  reset();
 		  exit(1);
 	       }	
@@ -848,7 +862,7 @@ void CFIT::cfit::processInput(std::string option)
 	       }	
 	     if( htUNTAGNOM->Integral() == 0. )
 	       {
-		  std::cout << "Template untag histogram is empty" << std::endl;
+		  std::cout << "Template untag histogram is empty: " << hnameUNTAGNOM << std::endl;
 		  reset();
 		  exit(1);
 	       }
@@ -2003,6 +2017,9 @@ void CFIT::cfit::applySys(std::vector<double> sfl,
 
    if( producePlots )
      {	
+   	if ( setBatch ) {
+   	 gROOT->SetBatch(kTRUE);
+    }
 	TCanvas *c1 = new TCanvas("c1","c1");
 	c1->SetGrid();
 	c1->SetTicks();
@@ -2029,14 +2046,16 @@ void CFIT::cfit::applySys(std::vector<double> sfl,
 //	     h_cov->LabelsOption("d");
 	     h_cov->SetLabelOffset(0.011);
 	  }	
+	std::string covName_name(covName.size(), '\0');
+	std::replace_copy(covName.begin(), covName.end(), covName_name.begin(), '/', '_');
 	if( option == "" ) 
 	  {
-	     std::string mname = "pics/"+covName+".eps";
+	     std::string mname = dirName+"/"+covName_name+".eps";
 	     c1->Print(mname.c_str());
 	  }	
 	else 
 	  {
-	     std::string mname = "pics/"+covName+"_tag.eps";
+	     std::string mname = dirName+"/"+covName_name+"_tag.eps";
 	     c1->Print(mname.c_str());
 	  }	
 	c1->Clear();
@@ -2316,17 +2335,17 @@ void CFIT::cfit::doFracSys(TH1D *hnom,TH1D *hsysDown,TH1D *hsysUp,int isys,std::
 	
 	if( producePlots )
 	  {
-	     std::string picname = "pics/sys"+postfix+".eps(";
-	     if( option == "tag" ) picname = "pics/sys"+postfix+"_tag.eps(";
+	     std::string picname = dirName+"/sys"+postfix+".eps(";
+	     if( option == "tag" ) picname = dirName+"/sys"+postfix+"_tag.eps(";
 	     if( option != "tag" )
 	       {	
-		  if( isys > 0 && isys != nSYS-1 ) picname = "pics/sys"+postfix+".eps";
-		  else if( isys == nSYS-1 ) picname = "pics/sys"+postfix+".eps)";
+		  if( isys > 0 && isys != nSYS-1 ) picname = dirName+"/sys"+postfix+".eps";
+		  else if( isys == nSYS-1 ) picname = dirName+"/sys"+postfix+".eps)";
 	       }
 	     else
 	       {
-		  if( isys > 0 && isys != nSYS-1 ) picname = "pics/sys"+postfix+"_tag.eps";
-		  else if( isys == nSYS-1 ) picname = "pics/sys"+postfix+"_tag.eps)";
+		  if( isys > 0 && isys != nSYS-1 ) picname = dirName+"/sys"+postfix+"_tag.eps";
+		  else if( isys == nSYS-1 ) picname = dirName+"/sys"+postfix+"_tag.eps)";
 	       }
 	     c1->Print(picname.c_str());
 	  }   
@@ -2506,9 +2525,12 @@ void CFIT::cfit::applySF(std::string option)
    
    if( producePlots )
      {	
-	std::string fsave = "pics/result.eps";
-	if( option == "tag" ) fsave = "pics/result_tag.eps";
+    std::string fsave = dirName+"/result.pdf";
+	if( option == "tag" ) fsave = dirName+"/result_tag.pdf";
 	c1->Print(fsave.c_str());
+	std::string fsavepng = dirName+"/result.png";
+	if( option == "tag" ) fsavepng = dirName+"/result_tag.png";
+	c1->Print(fsavepng.c_str());
 	c1->Clear();
 	
 	// template shape comparison
@@ -2594,9 +2616,12 @@ void CFIT::cfit::applySF(std::string option)
 	  }   
 	legShape->Draw();
 	
-	std::string fsaveShape = "pics/shape.eps";
-	if( option == "tag" ) fsaveShape = "pics/shape_tag.eps";
+	std::string fsaveShape = dirName+"/shape.pdf";
+	if( option == "tag" ) fsaveShape = dirName+"/shape_tag.pdf";
 	c1->Print(fsaveShape.c_str());
+	std::string fsaveShapepng = dirName+"/shape.png";
+	if( option == "tag" ) fsaveShapepng = dirName+"/shape_tag.png";
+	c1->Print(fsaveShapepng.c_str());
 	c1->Clear();
 
 	delete legShape;
@@ -2710,10 +2735,10 @@ void CFIT::cfit::drawPrePostFit(std::string option,bool postfit)
    
    if( producePlots )
      {	
-	std::string fsave = "pics/prefitStack.eps";
-	if( postfit ) fsave = "pics/postfitStack.eps";
-	if( option == "tag" ) fsave = "pics/prefitStack_tag.eps";
-	if( option == "tag" && postfit ) fsave = "pics/postfitStack_tag.eps";
+	std::string fsave = dirName+"/prefitStack.eps";
+	if( postfit ) fsave = dirName+"/postfitStack.eps";
+	if( option == "tag" ) fsave = dirName+"/prefitStack_tag.eps";
+	if( option == "tag" && postfit ) fsave = dirName+"/postfitStack_tag.eps";
 	c1->Print(fsave.c_str());
 	c1->Clear();
 	
@@ -2800,10 +2825,10 @@ void CFIT::cfit::drawPrePostFit(std::string option,bool postfit)
 	  }   
 	legShape->Draw();
 	
-	std::string fsaveShape = "pics/prefit.eps";
-	if( postfit ) fsaveShape = "pics/postfit.eps";
-	if( option == "tag" ) fsaveShape = "pics/prefit_tag.eps";
-	if( option == "tag" && postfit ) fsaveShape = "pics/postfit_tag.eps";
+	std::string fsaveShape = dirName+"/prefit.eps";
+	if( postfit ) fsaveShape = dirName+"/postfit.eps";
+	if( option == "tag" ) fsaveShape = dirName+"/prefit_tag.eps";
+	if( option == "tag" && postfit ) fsaveShape = dirName+"/postfit_tag.eps";
 	c1->Print(fsaveShape.c_str());
 	c1->Clear();
 
